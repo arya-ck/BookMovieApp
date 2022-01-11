@@ -1,0 +1,14 @@
+.movie-detail {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+.movie-detail .left {
+    width: 20%
+}
+.movie-detail .middle {
+    width: 60%
+}
+.movie-detail .right {
+    width: 20%
+}

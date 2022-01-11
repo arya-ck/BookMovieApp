@@ -8,7 +8,7 @@ header {
 header .left, header .right {
     width: 50%;
 }
-.right {
+header .right {
     justify-content: right;
     display: flex;
 }

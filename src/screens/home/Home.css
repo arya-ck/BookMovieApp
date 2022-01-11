@@ -1,0 +1,27 @@
+.upcoming-title {
+    background-color: #ff9999;
+    padding: 8px;
+    text-align: center;
+    font-size: 1rem;
+}
+.released-movies {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+.released-movies .left {
+    width: 76%;
+    margin: 16px;
+}
+.released-movies .right {
+    width: 24%;
+    margin: 16px;
+}
+.upcomingGridList {
+    flex-wrap: nowrap !important;
+    transform: translateZ(0);
+}
+.releasedGridList {
+    flex-wrap: wrap;
+    transform: translateZ(0);
+  }
