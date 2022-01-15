@@ -2,19 +2,52 @@ import React, { useEffect, useState } from 'react';
 import "./Header.css";
 import Logo from "../../assets/logo.svg";
 import { Modal, Box, Tabs, Tab, Button } from '@mui/material';
-import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
+import styled from '@emotion/styled';
+import { useHistory } from 'react-router-dom';
+import { FormControl, FormHelperText, Input, InputLabel } from '@material-ui/core';
 
+const StyledTabs = styled(Tabs)({
+    borderBottom: '1px solid #e8e8e8',
+    '& .MuiTabs-indicator': {
+        backgroundColor: '#ff7f7f' 
+    }
+  });
+const StyledTab = styled((props) => <Tab disableRipple {...props} />)(
+    () => ({
+      '&.Mui-selected': {
+        color: '#000',
+      }
+    }),
+  );
 const Header = function(props){
 
+    // indicates header in details page
+    let showBookBotton = props.showBook === true;
+
+    // rest end points
     let baseUrl = 'http://localhost:8085/api/v1';
     let registerEndPoint = '/signup';
     let loginEndPoint = '/auth/login';
+    let logoutEndPoint = '/auth/logout';
+    
+    // initialize state of the application
     let [authToken, setAuthToken] = useState(undefined);
-    const [isModalOpen, setModalOpen] = React.useState(false);
-    const [activeTab, setActiveTab] = React.useState(0);
-    const [loginForm, setLoginForm] = React.useState({username: '', password: ''});
-    const [registerForm, setRegisterForm] = React.useState({firstName: '', lastName: '', email: '', password: '', phone: ''});
+    const [isModalOpen, setModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState(0);
+    const [loginForm, setLoginForm] = useState({username: '', password: '', successMessage: undefined});
+    const [registerForm, setRegisterForm] = useState({firstName: '', lastName: '', email: '', password: '', phone: '', successMessage: undefined});
+    const [loginErrorMessages, setLoginErrorMessages] = useState({username: {display: 'none'}, password: {display: 'none'}});
+    const [registerErrorMessages, setRegisterErrorMessages] = useState({firstName: {display: 'none'}, lastName: {display: 'none'}, email: {display: 'none'}, password: {display: 'none'}, phone: {display: 'none'}});
 
+    // initialize vars for rendering
+    let loginButton, bookButton;
+    let type = ( authToken === '' || authToken === undefined || authToken === 'undefined')? 'login': 'logout';
+    let {movieId} = props;
+
+    // use history hook
+    const history = useHistory();
+
+    // style for modal window
     const loginModalStyle = {
         position: 'absolute',
         top: '50%',
@@ -25,73 +58,125 @@ const Header = function(props){
         border: '2px solid #000',
         boxShadow: 24,
         p: 4,
-      };
+    };
+
+    // load auth token from session storage
     useEffect(() => {
         let token = sessionStorage.getItem('token-bookmymovie');
-        if(token != '' && token != undefined){
+        if(token !== '' && token !== undefined && token !== 'undefined'){
             setAuthToken(token);
         }
     }, []);
 
-    const showLogin = async () => {
-        console.log('login');
-        // fetch('http://localhost:8085/api/v1/movies?page=1&limit=10').then((raw) => {
-        //     raw.json().then((resp) => {console.log(resp)})
-        // })
-        
+    // function for displayign modal
+    const showLogin = async () => {        
         setModalOpen(true);
     }
 
-    const showLogout = () => {
-        console.log('logout');
-        setModalOpen(true);
+    // logout the user
+    const showLogout = async () => {
+        try{
+            let rawResponse = await fetch(baseUrl+logoutEndPoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            if(rawResponse.ok){
+                setAuthToken();
+                sessionStorage.setItem('token-bookmymovie', undefined);
+            }
+        } catch (e){
+            console.info(e);
+        }
     }
 
+    // when book button is clicked, show login if guest user, otherwise go to book movie page
+    const onbookShow = () => {
+        if(type === 'login'){
+            showLogin();
+        } else {
+            history.push(`/bookshow/${movieId}`);            
+        }
+    }
+
+    // reset forms & error messages when modal is closed
     const handleModalClose = () => {
         setModalOpen(false);
+        setLoginForm({username: '', password: ''});
+        setRegisterForm({firstName: '', lastName: '', email: '', password: '', phone: '', successMessage: undefined});
+        setLoginErrorMessages({username: {display: 'none'}, password: {display: 'none'}});
+        setRegisterErrorMessages({firstName: {display: 'none'}, lastName: {display: 'none'}, email: {display: 'none'}, password: {display: 'none'}, phone: {display: 'none'}});
     }
 
+    // activate tabs when corresponding buttons are clciked
     const handleTabSwitch = (event, newValue) => {
         setActiveTab(newValue);
     };
 
+    // handle username change
     const handleUsernameChange = (event) => {
         let username = event.target.value;
-        setLoginForm({...loginForm, username })
+        setLoginForm({...loginForm, username });
+        initLoginErrorMessages();
     }
 
+    // handle password change
     const handlePasswordChange = (event) => {
         let password = event.target.value;
-        setLoginForm({...loginForm, password })
+        setLoginForm({...loginForm, password });
+        initLoginErrorMessages();
     }
 
-    const onLogin = async () => {
+    // perform login
+    const onLogin = async (e) => {
+        e.preventDefault();
         try{
+            // encode access key
             let accesskey = window.btoa(`${loginForm.username}:${loginForm.password}`);
-            const headers = new Headers();
-            headers.append('Authorization', `Basic ${accesskey}`);
 
+            // invoke login api
             let rawResponse = await fetch(baseUrl+loginEndPoint, {
                 method: 'POST',
-                headers: headers
+                headers: {
+                    'Authorization': `Basic ${accesskey}`
+                }
             });
-    
-            console.log('login requested', rawResponse, rawResponse.body);
+
+            // parse response and get token
+            let successMessage;
+            if(rawResponse.ok){
+                let token = rawResponse.headers.get('access-token');
+                sessionStorage.setItem('token-bookmymovie', token);
+                setAuthToken(token);
+                setModalOpen(false);
+            } else {
+                successMessage = 'Error occured';
+                setLoginForm({
+                    ...loginForm,
+                    successMessage
+                });
+            }
         } catch (e){
-            console.log(e);
+            console.info(e);
         }
     }
 
+    // handle field value changes in register form
     const handleRegisterFormChange = (event) => {
         let formField = event.target.name;
         let fieldValue = event.target.value;
         let newForm = {...registerForm};
         newForm[formField] = fieldValue;
         setRegisterForm(newForm);
+        initRegisterErrorMessages();
     }
 
-    const onRegister = async () => {
+    // register new user
+    const onRegister = async (e) => {
+        e.preventDefault();
         try{
+            // form data for new user
             let data = {
                 email_address: registerForm.email,
                 first_name: registerForm.firstName,
@@ -99,104 +184,204 @@ const Header = function(props){
                 mobile_number: registerForm.phone,
                 password: registerForm.password
             }
+
+            // set headers
             const headers = new Headers();
             headers.append('Content-Type', 'application/json');
 
+            // invoke api to register user
             let rawResponse = await fetch(baseUrl+registerEndPoint, {
                 method: 'POST',
                 headers: headers,
-                body: data
+                body: JSON.stringify(data)
             });
-    
-            console.log('register requested', rawResponse, rawResponse.body);
+
+            // parse response and check for status message
+            let successMessage;
+            let jsonResp = await rawResponse.json();
+            if(rawResponse.ok){
+                successMessage = jsonResp.status === 'ACTIVE'? 'Registrartion Successful. Please login!': 'Error occured';
+            } else {
+                successMessage = jsonResp.message;
+            }
+
+            // update status in register form
+            setRegisterForm({
+                ...registerForm,
+                successMessage
+            });
         } catch (e){
-            console.log(e);
+            console.info(e);
         }
     }
 
-    let type = ( authToken == '' || authToken == undefined)? 'login': 'logout';
-
-    let button;
-    if(type == 'logout'){
-        button = <Button variant="contained" onClick={showLogout}>Logout</Button>
-    } else {        
-        button = <Button variant="contained" onClick={showLogin}>Login</Button>
+    // initialize messages for login form
+    const initLoginErrorMessages = () => {
+        let {username, password} = loginErrorMessages;
+        if(loginForm.username.trim() === '' || loginForm.username === undefined){ // empty username
+            username = {display: 'block'};
+        } else {
+            username = {display: 'none'};
+        }
+        if(loginForm.password.trim() === '' || loginForm.password === undefined){ // empty password
+            password = {display: 'block'};
+        } else {
+            password = {display: 'none'};
+        }
+        setLoginErrorMessages({username, password});
     }
+
+    // initialize messages for register form
+    const initRegisterErrorMessages = () => {
+        let {firstName, lastName, email, password, phone} = registerErrorMessages;
+        if(registerForm.firstName.trim() === '' || registerForm.firstName === undefined){ // empty first name
+            firstName = {display: 'block'};
+        } else {
+            firstName = {display: 'none'};
+        }
+
+        if(registerForm.lastName.trim() === '' || registerForm.lastName === undefined){ // empty last name
+            lastName = {display: 'block'};
+        } else {
+            lastName = {display: 'none'};
+        }
+        
+        if(registerForm.email.trim() === '' || registerForm.email === undefined){ // empty email
+            email = {display: 'block'};
+        } else {
+            email = {display: 'none'};
+        }
+        
+        if(registerForm.password.trim() === '' || registerForm.password === undefined){ // empty password
+            password = {display: 'block'};
+        } else {
+            password = {display: 'none'};
+        }
+
+        if(registerForm.phone.trim() === '' || registerForm.phone === undefined){ // phone number
+            phone = {display: 'block'};
+        } else {
+            phone = {display: 'none'};
+        }
+        setRegisterErrorMessages({firstName, lastName, email, password, phone});
+    }
+
+    // show login/logout button based on authentication token
+    if(type === 'logout'){   
+        loginButton = <Button variant="contained" color="default" onClick={showLogout}>Logout</Button>
+    } else { 
+        loginButton = <Button variant="contained" color="default" onClick={showLogin}>Login</Button>
+    }
+
+    // redirect to login for guest user, book movie for logged in user
+    if(showBookBotton){
+        bookButton = <Button variant="contained" color="primary"  onClick={onbookShow}>Book Show</Button>
+    }
+    
     return (
         <header>
             <div className='left'>
                 <img src={Logo} alt="Logo" className='spin' />
             </div>
             <div className='right'>
-                {button}
-                <Button variant="contained" color="primary">Book Show</Button>
+                {bookButton}
+                {loginButton}
             </div>
+
+            {/* Modal window */}
             <Modal
                 open={isModalOpen}
                 onClose={handleModalClose}
                 aria-labelledby="login-modal"
-                aria-describedby="login to application"
-                >
+                aria-describedby="login to application">
                 <Box sx={{ width: '100%', ...loginModalStyle }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', color: 'red' }}>
-                        <Tabs value={activeTab} onChange={handleTabSwitch} aria-label="basic tabs example" sx={{indicatorColor: 'red', borderColor: 'red'}}>
-                            <Tab label="Login" aria-labelledby="simple-tabpanel-login" aria-describedby="login existing user" />
-                            <Tab label="Register" aria-labelledby="simple-tabpanel-register" aria-describedby="register new user" />
-                        </Tabs>
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        {/* Tabs - Login/Register */}
+                        <StyledTabs value={activeTab} onChange={handleTabSwitch} aria-label="login/register">
+                            <StyledTab label="Login" aria-labelledby="simple-tabpanel-login" aria-describedby="login existing user" />
+                            <StyledTab label="Register" aria-labelledby="simple-tabpanel-register" aria-describedby="register new user" />
+                        </StyledTabs>
                     </Box>
+
+                    {/* Login Tab content */}
                     <div
                         role="tabpanel"
                         hidden={activeTab !== 0}
                         id="simple-tabpanel-login"
                         aria-labelledby="simple-tab-login">
                         <div className='login-container'>                            
-                            <ValidatorForm className="login-form" onSubmit={onLogin}>                                    
-                                <TextValidator
-                                    id="username" name="username" label="Username *" type="text" value={loginForm.username} onChange={handleUsernameChange}
-                                    validators={["required"]} errorMessages={['Username is required']} variant="standard">
-                                </TextValidator>
-                                <TextValidator
-                                    id="password" name="password" label="Password *" type="password" value={loginForm.password} onChange={handlePasswordChange}
-                                    validators={["required"]} errorMessages={['Password is required']} variant="standard">
-                                </TextValidator>
+                            <form className="login-form" onSubmit={onLogin}>   
+                                <FormControl>
+                                    <InputLabel htmlFor="username">Username *</InputLabel>
+                                    <Input id="username" name="username" type="text" value={loginForm.username} required={true}  onChange={handleUsernameChange} />
+                                    <FormHelperText style={loginErrorMessages.username}>
+                                        <span className="red">Required</span>
+                                    </FormHelperText>
+                                </FormControl>
+                                <FormControl>
+                                    <InputLabel htmlFor="password">Password *</InputLabel>
+                                    <Input id="password" name="password" type="password" value={loginForm.password} required={true}  onChange={handlePasswordChange} />
+                                    <FormHelperText style={loginErrorMessages.password}>
+                                        <span className="red">Required</span>
+                                    </FormHelperText>
+                                </FormControl>
+                                <div className='error-message'>{loginForm.successMessage}</div>
                                 <div className="login-button">                                
-                                    <Button type="submit" variant="contained">Login</Button>
+                                    <Button type="submit" variant="contained" onClick={initLoginErrorMessages}>Login</Button>
                                 </div>
-                            </ValidatorForm>
+                            </form>
                         </div>
                     </div>
+
+                    {/* Register Tab content */}
                     <div
                         role="tabpanel"
                         hidden={activeTab !== 1}
                         id="simple-tabpanel-register"
                         aria-labelledby="simple-tab-register">
-                        <div className='register-container'>
-                            <ValidatorForm className="register-form" onSubmit={onRegister}>                                    
-                                <TextValidator
-                                    id="firstName" name="firstName" label="First Name *" type="text" value={registerForm.firstName} onChange={handleRegisterFormChange}
-                                    validators={["required"]} errorMessages={['required']} variant="standard">
-                                </TextValidator>
-                                <TextValidator
-                                    id="lastName" name="lastName" label="Last Name *" type="text" value={registerForm.lastName} onChange={handleRegisterFormChange}
-                                    validators={["required"]} errorMessages={['required']} variant="standard">
-                                </TextValidator>
-                                <TextValidator
-                                    id="email" name="email" label="Email" type="Email *" value={registerForm.email} onChange={handleRegisterFormChange}
-                                    validators={["required"]} errorMessages={['required']} variant="standard">
-                                </TextValidator>
-                                <TextValidator
-                                    id="newPassword" name="password" label="Password *" type="password" value={registerForm.password} onChange={handleRegisterFormChange}
-                                    validators={["required"]} errorMessages={['required']} variant="standard">
-                                </TextValidator>
-                                <TextValidator
-                                    id="phone" name="phone" label="Contact No *" type="number" value={registerForm.phone} onChange={handleRegisterFormChange}
-                                    validators={["required"]} errorMessages={['required']} variant="standard">
-                                </TextValidator>
-                                <div className="register-button">                                
-                                    <Button type="submit" variant="contained">Register</Button>
-                                </div>
-                            </ValidatorForm>
-                        </div>
+                        <form className="register-form" onSubmit={onRegister}>  
+                            <div className='register-container'>
+                                <FormControl>
+                                    <InputLabel htmlFor="firstName">First Name *</InputLabel>
+                                    <Input id="firstName" name="firstName" type="text" value={registerForm.firstName} required={true}  onChange={handleRegisterFormChange} />
+                                    <FormHelperText style={registerErrorMessages.firstName}>
+                                        <span className="red">Required</span>
+                                    </FormHelperText>
+                                </FormControl>
+                                <FormControl>
+                                    <InputLabel htmlFor="lastName">Last Name *</InputLabel>
+                                    <Input id="lastName" name="lastName" type="text" value={registerForm.lastName} required={true}  onChange={handleRegisterFormChange} />
+                                    <FormHelperText style={registerErrorMessages.lastName}>
+                                        <span className="red">Required</span>
+                                    </FormHelperText>
+                                </FormControl>
+                                <FormControl>
+                                    <InputLabel htmlFor="email">Email *</InputLabel>
+                                    <Input id="email" name="email" type="email" value={registerForm.email} required={true}  onChange={handleRegisterFormChange} />
+                                    <FormHelperText style={registerErrorMessages.email}>
+                                        <span className="red">Required</span>
+                                    </FormHelperText>
+                                </FormControl>
+                                <FormControl>
+                                    <InputLabel htmlFor="newPassword">Password *</InputLabel>
+                                    <Input id="newPassword" name="password" type="password" value={registerForm.password} required={true}  onChange={handleRegisterFormChange} />
+                                    <FormHelperText style={registerErrorMessages.password}>
+                                        <span className="red">Required</span>
+                                    </FormHelperText>
+                                </FormControl>
+                                <FormControl>
+                                    <InputLabel htmlFor="phone">Contact No *</InputLabel>
+                                    <Input id="phone" name="phone" type="tel" value={registerForm.phone} required={true}  onChange={handleRegisterFormChange} pattern="[\d]{10}" />
+                                    <FormHelperText style={registerErrorMessages.phone}>
+                                        <span className="red">Required</span>
+                                    </FormHelperText>
+                                </FormControl>
+                            </div>
+                            {registerForm.successMessage}
+                            <div className="register-button">                                
+                                <Button type="submit" variant="contained" onClick={initRegisterErrorMessages}>Register</Button>
+                            </div>
+                        </form>
                     </div>
                 </Box>
             </Modal>

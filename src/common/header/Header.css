@@ -1,7 +1,7 @@
 header {
     height: 36px;
     background-color: #222;
-    padding: 8px 32px 16px 8px;
+    padding: 8px 32px 8px 16px;
     display: flex;
     flex-direction: row;
 }
@@ -34,8 +34,23 @@ img.spin {
     margin: 0 25%;
     margin-top: 1rem;
 }
+.register-container {
+    margin-bottom: 1rem;
+}
 .login-button, .register-button {
     margin-top: 3rem;
     display: flex;
     justify-content: center;
+}
+.login-container, .register-form{
+    text-align: center;
+}
+.MuiTab-root.Mui-selected {
+    color: red;
+}
+.red {
+    color: red;
+}
+.error-message {
+    margin-top: 1rem;
 }
