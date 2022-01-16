@@ -30,8 +30,8 @@ img.spin {
     animation-timing-function: linear;
 }
 .login-container, .register-container {
-    width: 50%;
-    margin: 0 25%;
+    width: 60%;
+    margin: 0 20%;
     margin-top: 1rem;
 }
 .register-container {
@@ -53,4 +53,7 @@ img.spin {
 }
 .error-message {
     margin-top: 1rem;
+}
+.MuiTabs-root {
+    width: 100%;
 }

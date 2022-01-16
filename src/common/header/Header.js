@@ -16,6 +16,9 @@ const StyledTab = styled((props) => <Tab disableRipple {...props} />)(
     () => ({
       '&.Mui-selected': {
         color: '#000',
+      },
+      '&.MuiTab-root': {
+        width: '50%',
       }
     }),
   );
@@ -41,7 +44,7 @@ const Header = function(props){
 
     // initialize vars for rendering
     let loginButton, bookButton;
-    let type = ( authToken === '' || authToken === undefined || authToken === 'undefined')? 'login': 'logout';
+    let type = ( authToken === '' || authToken === null || authToken === undefined || authToken === 'undefined')? 'login': 'logout';
     let {movieId} = props;
 
     // use history hook
@@ -149,9 +152,9 @@ const Header = function(props){
                 let token = rawResponse.headers.get('access-token');
                 sessionStorage.setItem('token-bookmymovie', token);
                 setAuthToken(token);
-                setModalOpen(false);
+                handleModalClose();
             } else {
-                successMessage = 'Error occured';
+                successMessage = 'Error occured. Unable to Login!';
                 setLoginForm({
                     ...loginForm,
                     successMessage
@@ -310,7 +313,7 @@ const Header = function(props){
                         id="simple-tabpanel-login"
                         aria-labelledby="simple-tab-login">
                         <div className='login-container'>                            
-                            <form className="login-form" onSubmit={onLogin}>   
+                            <form className="login-form" onSubmit={onLogin}>
                                 <FormControl>
                                     <InputLabel htmlFor="username">Username *</InputLabel>
                                     <Input id="username" name="username" type="text" value={loginForm.username} required={true}  onChange={handleUsernameChange} />

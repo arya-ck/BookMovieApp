@@ -3,7 +3,7 @@ import { Rating, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom/cjs/react-router-dom';
 import YouTube from 'react-youtube';
-import {StarBorder} from '@material-ui/icons';
+import StarBorderIcon from '@material-ui/icons/StarBorder';
 import Header from '../../common/header/Header';
 import "./Details.css";
 
@@ -25,7 +25,7 @@ const Details = function(props){
 
     const getVideoId = (url) => {
         let id;
-        if(url == undefined) return id;
+        if(url === undefined) return id;
         
         let index = url.indexOf('?v=');
         if(index>-1){
@@ -41,30 +41,28 @@ const Details = function(props){
 
     return (
         <React.Fragment>            
-            <Header />
+            <Header showBook={true} movieId={id} />
             <div className='details-container'>
                 <div className='back-button'>
-                    <Typography component="a"><a href='#' onClick={() => {history.push(`/`);}}>&lt; Back to Home</a></Typography>
-                    
+                    <Typography component="span" onClick={() => {history.push(`/`);}}>&lt; Back to Home</Typography>                    
                 </div>
                 <div className='movie-detail'>
                     <div className='left'>
                         <img src={movie.poster_url} alt={movie.title} />
                     </div>
                     <div className='middle'>
-                        <Typography variant="h2" component="h2">{movie.title}</Typography>
-                        <div><b>Genere:</b>&nbsp;{movie.genres}</div>
-                        <div><b>Duration:</b>&nbsp;{movie.duration}</div>
-                        <div><b>Release Date:</b>&nbsp;{movie.release_date}</div>
-                        <div><b>Rating:</b>&nbsp;{movie.critics_rating}</div>
-                        <div><b>Plot:</b>&nbsp;(<a href={movie.wiki_url}>Wiki Link</a>){movie.storyline}</div>
-                        <div><b>Trailer:</b></div>
+                        <Typography variant="h2" component="div"><b>{movie.title}</b></Typography>
+                        <Typography variant="h6" component="div"><b>Genre:</b>&nbsp;{movie.genres}</Typography>
+                        <Typography variant="h6" component="div"><b>Duration:</b>&nbsp;{movie.duration}</Typography>
+                        <Typography variant="h6" component="div"><b>Release Date:</b>&nbsp;{movie.release_date}</Typography>
+                        <Typography variant="h6" component="div"><b>Rating:</b>&nbsp;{movie.rating}</Typography>
+                        <Typography variant="h6" component="div" style={{marginTop: '16px'}}><b>Plot:</b>&nbsp;(<a href={movie.wiki_url}>Wiki Link</a>)&nbsp;{movie.storyline}</Typography>
+                        <Typography variant="h6" component="div" style={{marginTop: '16px'}}><b>Trailer:</b></Typography>
                         <YouTube videoId={getVideoId(movie.trailer_url)}  />
-                        {/* opts={opts} onReady={this._onReady} */}
                     </div>
                     <div className='right'>
                         <div>
-                            <Typography variant="h5" component="h5">Rate this movie:</Typography>
+                            <Typography variant="h6" component="h6"><b>Rate this movie:</b></Typography>
                         </div>
                         <div>
                             <Rating
@@ -73,11 +71,12 @@ const Details = function(props){
                                 onChange={(event, newValue) => {
                                     setStars(newValue);
                                 }}
-                                icon={<StarBorder />}
+                                emptyIcon={<StarBorderIcon className='star' />}  
+                                icon={<StarBorderIcon />}                              
                             />
                         </div>
                         <div>
-                            <Typography variant="h5" component="h5">Artists:</Typography>
+                            <Typography variant="h6" component="h6" style={{marginTop: '16px'}}><b>Artists:</b></Typography>
                         </div>
                         <div>
                             <GridList cellHeight={250} rows={1} cols={2} >
