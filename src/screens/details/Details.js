@@ -8,23 +8,26 @@ import Header from '../../common/header/Header';
 import "./Details.css";
 
 const Details = function(props){
+
+    // initialize state and route params
     let { id } = useParams();
     let [movie, setMovie] = useState({artists:[]});
     let [stars, setStars] = useState(0);
     const history = useHistory();
 
+    // load movie details from backend
     const loadDetails = async () => {
         let rawResp = await fetch(`http://localhost:8085/api/v1/movies/${id}`);
         let jsonResp = await rawResp.json();
-        console.log(jsonResp);
         if(!jsonResp.artists){
             jsonResp.artists = [];
         }
         setMovie(jsonResp);
     }
 
+    // generate video id
     const getVideoId = (url) => {
-        let id;
+        let id='';
         if(url === undefined) return id;
         
         let index = url.indexOf('?v=');
@@ -35,6 +38,7 @@ const Details = function(props){
         return id;
     }
 
+    // load movie details when component is initialized
     useEffect(() => {
         loadDetails();
     }, []);
@@ -43,13 +47,19 @@ const Details = function(props){
         <React.Fragment>            
             <Header showBook={true} movieId={id} />
             <div className='details-container'>
+                
+                {/* Back button */}
                 <div className='back-button'>
                     <Typography component="span" onClick={() => {history.push(`/`);}}>&lt; Back to Home</Typography>                    
                 </div>
                 <div className='movie-detail'>
+
+                    {/* Movie Poster */}
                     <div className='left'>
                         <img src={movie.poster_url} alt={movie.title} />
                     </div>
+
+                    {/* Details Section */}
                     <div className='middle'>
                         <Typography variant="h2" component="div"><b>{movie.title}</b></Typography>
                         <Typography variant="h6" component="div"><b>Genre:</b>&nbsp;{movie.genres}</Typography>
@@ -61,9 +71,13 @@ const Details = function(props){
                         <YouTube videoId={getVideoId(movie.trailer_url)}  />
                     </div>
                     <div className='right'>
+
+                        {/* Rating */}
                         <div>
                             <Typography variant="h6" component="h6"><b>Rate this movie:</b></Typography>
                         </div>
+
+                        {/* Star display */}
                         <div>
                             <Rating
                                 name="simple-controlled"
@@ -75,6 +89,8 @@ const Details = function(props){
                                 icon={<StarBorderIcon />}                              
                             />
                         </div>
+
+                        {/* Artist Section */}
                         <div>
                             <Typography variant="h6" component="h6" style={{marginTop: '16px'}}><b>Artists:</b></Typography>
                         </div>
