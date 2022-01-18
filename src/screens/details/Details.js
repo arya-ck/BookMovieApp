@@ -14,6 +14,7 @@ const Details = function(props){
     let [movie, setMovie] = useState({artists:[]});
     let [stars, setStars] = useState(0);
     const history = useHistory();
+    const [showBookBotton, setShowBookBotton] = useState(false);
 
     // load movie details from backend
     const loadDetails = async () => {
@@ -23,6 +24,9 @@ const Details = function(props){
             jsonResp.artists = [];
         }
         setMovie(jsonResp);
+        if(jsonResp.status === 'RELEASED'){
+            setShowBookBotton(true);
+        }
     }
 
     // generate video id
@@ -38,14 +42,16 @@ const Details = function(props){
         return id;
     }
 
+    
     // load movie details when component is initialized
     useEffect(() => {
         loadDetails();
     }, []);
+    
 
     return (
         <React.Fragment>            
-            <Header showBook={true} movieId={id} />
+            <Header showBook={showBookBotton} movieId={id} />
             <div className='details-container'>
                 
                 {/* Back button */}
