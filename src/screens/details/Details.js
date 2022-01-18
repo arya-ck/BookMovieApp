@@ -11,7 +11,7 @@ const Details = function(props){
 
     // initialize state and route params
     let { id } = useParams();
-    let [movie, setMovie] = useState({artists:[]});
+    let [movie, setMovie] = useState({artists:[], release_date: undefined});
     let [stars, setStars] = useState(0);
     const history = useHistory();
     const [showBookBotton, setShowBookBotton] = useState(false);
@@ -70,7 +70,7 @@ const Details = function(props){
                         <Typography variant="h2" component="div"><b>{movie.title}</b></Typography>
                         <Typography variant="h6" component="div"><b>Genre:</b>&nbsp;{movie.genres}</Typography>
                         <Typography variant="h6" component="div"><b>Duration:</b>&nbsp;{movie.duration}</Typography>
-                        <Typography variant="h6" component="div"><b>Release Date:</b>&nbsp;{movie.release_date}</Typography>
+                        <Typography variant="h6" component="div"><b>Release Date:</b>&nbsp;{new Date(movie.release_date).toDateString()}</Typography>
                         <Typography variant="h6" component="div"><b>Rating:</b>&nbsp;{movie.rating}</Typography>
                         <Typography variant="h6" component="div" style={{marginTop: '16px'}}><b>Plot:</b>&nbsp;(<a href={movie.wiki_url}>Wiki Link</a>)&nbsp;{movie.storyline}</Typography>
                         <Typography variant="h6" component="div" style={{marginTop: '16px'}}><b>Trailer:</b></Typography>
